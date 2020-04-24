@@ -4,7 +4,7 @@ import (
 	"net/http"
   "fmt"
 
-	"github.com/danilopolani/gocialite/structs"
+	"github.com/BAANDY/gocialite/structs"
 	"golang.org/x/oauth2"
 )
 
