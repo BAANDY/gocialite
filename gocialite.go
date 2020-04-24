@@ -4,28 +4,45 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/BAANDY/gocialite/drivers"
 	"github.com/BAANDY/gocialite/structs"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/s12v/go-jwks"
+	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"gopkg.in/oleiade/reflections.v1"
 )
+
+var jwksAppleClient jwks.JWKSClient
+
+func init() {
+	jwksSource := jwks.NewWebSource("https://appleid.apple.com/auth/keys")
+	jwksAppleClient = jwks.NewDefaultClient(
+		jwksSource,
+		time.Minute*10,
+		12*time.Hour,
+	)
+}
 
 // Dispatcher allows to safely issue concurrent Gocials
 type Dispatcher struct {
 	mu sync.RWMutex
 	g  map[string]*Gocial
+	gt *Gocial
 }
 
 // NewDispatcher creates new Dispatcher
 func NewDispatcher() *Dispatcher {
-	return &Dispatcher{g: make(map[string]*Gocial)}
+	return &Dispatcher{g: make(map[string]*Gocial), gt: &Gocial{}}
 }
 
 // New Gocial instance
@@ -35,6 +52,7 @@ func (d *Dispatcher) New() *Gocial {
 	state := randToken()
 	g := &Gocial{state: state}
 	d.g[state] = g
+
 	return g
 }
 
@@ -51,6 +69,16 @@ func (d *Dispatcher) Handle(state, code string) (*structs.User, *oauth2.Token, e
 	delete(d.g, state)
 	d.mu.Unlock()
 	return &g.User, g.Token, err
+}
+
+// HandleToken get user profiel
+func (d *Dispatcher) HandleToken(provider string, token string) (*structs.User, error) {
+	if provider == "apple" {
+		user, err := d.gt.HandleAppleToken(token)
+		return user, err
+	}
+	user, err := d.gt.HandleToken(provider, token)
+	return user, err
 }
 
 // Gocial is the main struct of the package
@@ -202,6 +230,110 @@ func (g *Gocial) Handle(state, code string) error {
 	g.User = gUser
 
 	return nil
+}
+
+// HandleToken get user profile from token
+func (g *Gocial) HandleToken(provider string, token string) (*structs.User, error) {
+	// Retrieve all from scopes
+	if _, ok := apiMap[provider]; !ok {
+		return nil, errors.New("Provider not found")
+	}
+	driverAPIMap := apiMap[provider]
+	driverUserMap := userMap[provider]
+	userEndpoint := strings.Replace(driverAPIMap["userEndpoint"], "%ACCESS_TOKEN", token, -1)
+	// Get user info
+	g.User = structs.User{}
+	req, err := http.NewRequest("GET", driverAPIMap["endpoint"]+userEndpoint, nil) // , bytes.NewBuffer(jsonStr)
+	q := req.URL.Query()                                                           // Get a copy of the query values.
+	if provider == "google" {
+		q.Add("id_token", token)
+	} else {
+		q.Add("access_token", token)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		defer resp.Body.Close()
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		data, err := jsonDecode(body)
+		if err, ok := data["error"]; ok {
+			errorDetail := err.(map[string]interface{})
+			if errorMessage, ok := errorDetail["message"]; ok {
+				return nil, errors.New(errorMessage.(string))
+			}
+			return nil, errors.New("Token is invalid")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("Error decoding JSON: %s", err.Error())
+		}
+
+		// Scan all fields and dispatch through the mapping
+		mapKeys := keys(driverUserMap)
+		gUser := structs.User{}
+		for k, f := range data {
+			if !inSlice(k, mapKeys) { // Skip if not in the mapping
+				continue
+			}
+
+			// Assign the value
+			// Dirty way, but we need to convert also int/float to string
+			_ = reflections.SetField(&gUser, driverUserMap[k], fmt.Sprint(f))
+		}
+
+		// Set the "raw" user interface
+		gUser.Raw = data
+
+		// Update the struct
+		return &gUser, nil
+	} else {
+		return nil, errors.New("Token is invalid")
+	}
+}
+
+func (g *Gocial) HandleAppleToken(idToken string) (*structs.User, error) {
+	token, err := jwt.ParseWithClaims(idToken, &structs.CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		jwk, err := jwksAppleClient.GetEncryptionKey(fmt.Sprintf("%v", token.Header["kid"]))
+		if err != nil {
+			return nil, err
+		}
+		return jwk.Key, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !token.Valid {
+		return nil, err
+	}
+	user := token.Claims.(*structs.CustomClaims)
+
+	if "https://appleid.apple.com" != user.Issuer {
+		return nil, errors.New("token is invalid")
+	}
+
+	if viper.GetString("auth.social.apple.clientID") != user.Audience {
+		err := errors.New("token is invalid")
+		return nil, err
+	}
+
+	u := structs.User{
+		ID:        user.Subject,
+		Username:  "",
+		FirstName: user.Name,
+		LastName:  user.Lastname,
+		FullName:  user.Name + " " + user.Lastname,
+		Email:     user.Email,
+		// Avatar
+		// Raw
+	}
+
+	return &u, nil
 }
 
 // Generate a random token
