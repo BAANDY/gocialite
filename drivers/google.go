@@ -15,12 +15,12 @@ func init() {
 
 // GoogleUserMap is the map to create the User struct
 var GoogleUserMap = map[string]string{
-	"id":          "ID",
-	"email":       "Email",
-	"name":        "FullName",
-	"given_name":  "FirstName",
-	"family_name": "LastName",
-	"picture":     "Avatar",
+	"id":          "sub",
+	"email":       "email",
+	"name":        "name",
+	"given_name":  "given_name",
+	"family_name": "family_name",
+	"picture":     "picture",
 }
 
 // GoogleAPIMap is the map for API endpoints
