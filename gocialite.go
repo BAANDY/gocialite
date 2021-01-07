@@ -258,6 +258,8 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 		return nil, err
 	}
 
+	fmt.Println(driverAPIMap["endpoint"]+userEndpoint, resp.StatusCode, q.Encode())
+
 	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
 		defer resp.Body.Close()
 
@@ -361,7 +363,6 @@ func jsonDecode(js []byte) (map[string]interface{}, error) {
 	decoder.UseNumber()
 
 	if err := decoder.Decode(&decoded); err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
