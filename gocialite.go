@@ -281,7 +281,6 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 			if !inSlice(k, mapKeys) { // Skip if not in the mapping
 				continue
 			}
-			fmt.Println("key", f)
 
 			// Assign the value
 			// Dirty way, but we need to convert also int/float to string
