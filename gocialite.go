@@ -361,6 +361,7 @@ func jsonDecode(js []byte) (map[string]interface{}, error) {
 	decoder.UseNumber()
 
 	if err := decoder.Decode(&decoded); err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
