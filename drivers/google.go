@@ -15,7 +15,7 @@ func init() {
 
 // GoogleUserMap is the map to create the User struct
 var GoogleUserMap = map[string]string{
-	"id":          "Sub",
+	"sub":         "ID",
 	"email":       "Email",
 	"name":        "FullName",
 	"given_name":  "FirstName",

@@ -277,10 +277,12 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 		// Scan all fields and dispatch through the mapping
 		mapKeys := keys(driverUserMap)
 		gUser := structs.User{}
+		fmt.Println(&gUser, driverUserMap[k])
 		for k, f := range data {
 			if !inSlice(k, mapKeys) { // Skip if not in the mapping
 				continue
 			}
+			fmt.Println("key", f)
 
 			// Assign the value
 			// Dirty way, but we need to convert also int/float to string
