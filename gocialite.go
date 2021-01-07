@@ -259,12 +259,13 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 	}
 
 	fmt.Println(driverAPIMap["endpoint"]+userEndpoint, resp.StatusCode, q.Encode())
+	body, _ := ioutil.ReadAll(resp.Body)
+	data, err := jsonDecode(body)
+	fmt.Println(data)
 
+	defer resp.Body.Close()
 	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		defer resp.Body.Close()
 
-		body, _ := ioutil.ReadAll(resp.Body)
-		data, err := jsonDecode(body)
 		if err, ok := data["error"]; ok {
 			errorDetail := err.(map[string]interface{})
 			if errorMessage, ok := errorDetail["message"]; ok {
