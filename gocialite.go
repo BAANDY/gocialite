@@ -247,6 +247,8 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 	q := req.URL.Query()                                                           // Get a copy of the query values.
 	if provider == "google" {
 		q.Add("id_token", token)
+	} else if provider == "line" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	} else {
 		q.Add("access_token", token)
 	}

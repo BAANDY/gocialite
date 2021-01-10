@@ -1,7 +1,6 @@
 package drivers
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/BAANDY/gocialite/structs"
@@ -36,33 +35,7 @@ var LineAPIMap = map[string]string{
 }
 
 // LineUserFn is a callback to parse additional fields for User
-var LineUserFn = func(client *http.Client, u *structs.User) {
-	// Get user ID
-	req, err := http.NewRequest("GET", LineAPIMap["endpoint"]+LineAPIMap["authEndpoint"], nil)
-	// ...
-	req.Header.Add("If-None-Match", `W/"wyzzy"`)
-	resp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-
-	defer resp.Body.Close()
-	res, _ := ioutil.ReadAll(resp.Body)
-	data, err := jsonDecode(res)
-	if err != nil {
-		return
-	}
-
-	u.ID = data["userId"].(string)
-
-	// Fetch other user information
-	if v, ok := data["displayName"]; ok {
-		u.FullName = v.(string)
-	}
-	if v, ok := data["pictureUrl"]; ok {
-		u.Avatar = v.(string)
-	}
-}
+var LineUserFn = func(client *http.Client, u *structs.User) {}
 
 // LineDefaultScopes contains the default scopes
 var LineDefaultScopes = []string{"profile", "email"}
