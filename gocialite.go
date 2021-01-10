@@ -249,10 +249,8 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 	if provider == "google" {
 		q.Add("id_token", token)
 	} else if provider == "line" {
-		req, err = http.NewRequest("POST", driverAPIMap["endpoint"]+userEndpoint, nil) // , bytes.NewBuffer(jsonStr)
-		q.Add("id_token", token)
-		q.Add("client_id", os.Getenv("LINE_CLIENT_ID"))
-		fmt.Println(driverAPIMap["endpoint"]+userEndpoint, os.Getenv("LINE_CLIENT_ID"), token)
+		payload := strings.NewReader(fmt.Sprintf("client_id=%s&id_token=%s", os.Getenv("LINE_CLIENT_ID"), token))
+		req, err = http.NewRequest("POST", driverAPIMap["endpoint"]+userEndpoint, payload) // , bytes.NewBuffer(jsonStr)
 	} else {
 		q.Add("access_token", token)
 	}
