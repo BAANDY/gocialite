@@ -250,7 +250,8 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 		q.Add("id_token", token)
 	} else if provider == "line" {
 		payload := strings.NewReader(fmt.Sprintf("client_id=%s&id_token=%s", os.Getenv("LINE_CLIENT_ID"), token))
-		req, err = http.NewRequest("POST", driverAPIMap["endpoint"]+userEndpoint, payload) // , bytes.NewBuffer(jsonStr)
+		req, err = http.NewRequest("POST", driverAPIMap["endpoint"]+userEndpoint, payload)
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	} else {
 		q.Add("access_token", token)
 	}
