@@ -20,12 +20,12 @@ func init() {
 
 // LineUserMap is the map to create the User struct
 var LineUserMap = map[string]string{
-	"userId":      "ID",
+	"sub":         "ID",
 	"email":       "Email",
-	"displayName": "FullName",
+	"name":        "FullName",
 	"given_name":  "FirstName",
 	"family_name": "LastName",
-	"pictureUrl":  "Avatar",
+	"picture":     "Avatar",
 }
 
 // LineAPIMap is the map for API endpoints
