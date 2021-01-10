@@ -252,6 +252,7 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 		req, err = http.NewRequest("POST", driverAPIMap["endpoint"]+userEndpoint, nil) // , bytes.NewBuffer(jsonStr)
 		q.Add("id_token", token)
 		q.Add("client_id", os.Getenv("LINE_CLIENT_ID"))
+		fmt.Println(driverAPIMap["endpoint"]+userEndpoint, os.Getenv("LINE_CLIENT_ID"), token)
 	} else {
 		q.Add("access_token", token)
 	}
