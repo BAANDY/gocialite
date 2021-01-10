@@ -31,7 +31,7 @@ var LineUserMap = map[string]string{
 // LineAPIMap is the map for API endpoints
 var LineAPIMap = map[string]string{
 	"endpoint":     "https://api.line.me",
-	"userEndpoint": "/v2/profile",
+	"userEndpoint": "/oauth2/v2.1/verify",
 }
 
 // LineUserFn is a callback to parse additional fields for User

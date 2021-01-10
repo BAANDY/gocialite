@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -247,8 +248,9 @@ func (g *Gocial) HandleToken(provider string, token string) (*structs.User, erro
 	q := req.URL.Query()                                                           // Get a copy of the query values.
 	if provider == "google" {
 		q.Add("id_token", token)
+		q.Add("client_id", os.Getenv("LINE_CLIENT_ID"))
 	} else if provider == "line" {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		q.Add("id_token", token)
 	} else {
 		q.Add("access_token", token)
 	}
