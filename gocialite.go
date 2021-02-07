@@ -18,7 +18,6 @@ import (
 	"github.com/BAANDY/gocialite/structs"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/s12v/go-jwks"
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"gopkg.in/oleiade/reflections.v1"
 )
@@ -322,7 +321,7 @@ func (g *Gocial) HandleAppleToken(idToken string) (*structs.User, error) {
 		return nil, errors.New("token is invalid")
 	}
 
-	if viper.GetString("auth.social.apple.clientID") != user.Audience {
+	if os.Getenv("APPLE_CLIENT_ID") != user.Audience {
 		err := errors.New("token is invalid")
 		return nil, err
 	}
